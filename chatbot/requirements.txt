@@ -1,0 +1,12 @@
+pandas
+wikipedia
+SpeechRecognition
+pygame
+pyowm
+pyaudio
+pyttsx3
+pyttsx
+nltk
+numpy
+pyjokes
+googletrans
