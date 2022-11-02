@@ -6,6 +6,7 @@ import wikipedia
 from pygame import mixer
 import pyowm
 import config
+import requests, json
 import speech_recognition as sr
 from google_places import (
     change_location_query,
@@ -16,6 +17,25 @@ from google_places import (
 )
 import pyjokes
 from googletrans import Translator
+# importing geopy library
+from geopy.geocoders import Nominatim
+
+# calling the Nominatim tool
+loc = Nominatim(user_agent="GetLoc")
+
+# entering the location name
+getLoc = loc.geocode("Sion Mumbai")
+
+# printing address
+print(getLoc.address)
+lat=getLoc.latitude
+long=getLoc.longitude
+
+# printing latitude and longitude
+print("Latitude = ", getLoc.latitude, "\n")
+print("Longitude = ", getLoc.longitude)
+
+
 
 from voice_conf import *
 # from speech_recognition.__main__ import r, audio
@@ -57,6 +77,8 @@ colrep = [
 ]
 cmd8 = ["what is you favourite colour", "what is your favourite color"]
 cmd9 = ["thank you"]
+cmd10 = ["Play spotify","play on spotify","open spotify"]
+
 
 repfr9 = ["youre welcome", "glad i could help you"]
 
@@ -92,7 +114,7 @@ while True:
     else:
         r = sr.Recognizer()
         with sr.Microphone() as source:
-            t = translator.translate('Say something', dest=language_conf[:2])
+            t = translator.translate('Hi i am a Chat bot! Give me an Order.Tell me something to do', dest=language_conf[:2])
             print(t.text)
             engine.say(t.text)
             engine.runAndWait()
@@ -109,26 +131,28 @@ while True:
     print("Intent:", intent)
     # TODO:: entity based weather output
     if intent == "weather":
-        print("here")
-        owm = pyowm.OWM(config.weather_api_key)
-        mgr = owm.weather_manager()
-        one_call = mgr.one_call(lat=52.5244, lon=13.4105)
-        temp =one_call.forecast_daily[0].temperature('celsius').get('feels_like_morn', None) #Ex.: 7.7
-        wind =one_call.forecast_hourly[3].wind().get('speed', 0) # Eg.: 4.42
-        hum =one_call.current.humidity # Eg.: 81
-        print(temp)
-        print(hum)
-        print(wind)
-        engine.say("Wind Speed")
-        engine.say(wind)
-        engine.runAndWait()
-        engine.say("humidity")
-        engine.runAndWait()
-        engine.say(hum)
-        engine.runAndWait()
-        engine.say("temperature")
-        engine.runAndWait()
-        engine.say(temp)
+        url = "https://yahoo-weather5.p.rapidapi.com/weather"
+
+        querystring = {"lat":lat,"long":long,"format":"json","u":"f"}
+
+        headers = {
+            "X-RapidAPI-Key": "22fb713a8fmshceedc40408df3e0p1f2252jsnbc890ecc3252",
+            "X-RapidAPI-Host": "yahoo-weather5.p.rapidapi.com"
+        }
+
+        response = requests.request("GET", url, headers=headers, params=querystring)
+
+                # parse x:
+        y = json.loads(response.text)
+        weather = str(y["current_observation"])
+
+        # the result is a Python dictionary:
+        print(y["current_observation"])
+
+    
+
+
+        engine.say(weather)
         engine.runAndWait()
         # owm = pyowm.OWM(config.weather_api_key)
         # observation = owm.weather_at_place("Bangalore, IN")
@@ -151,12 +175,84 @@ while True:
         # engine.runAndWait()
         # engine.say(w.get_temperature("celsius"))
         # engine.runAndWait()
-    if intent == "music" or intent == "restaurant":
+    if intent == "music":
         engine.say("please wait")
         engine.runAndWait()
-        print(wikipedia.summary(translate))
-        engine.say(wikipedia.summary(translate))
+        mixer.init()
+        mixer.music.load("music.mp3")
+        mixer.music.play()
+       
         engine.runAndWait()
+    # if intent == "music":
+    #     url = "https://musiclinkssapi.p.rapidapi.com/apiSearch/track"
+
+    #     querystring = {"query":translate}
+
+    #     headers = {
+    #             "X-RapidAPI-Key": "c607ce4b44mshf7cdc16120027e0p183be7jsn37acb1ed9913",
+    #             "X-RapidAPI-Host": "musiclinkssapi.p.rapidapi.com"
+    #         }
+
+    #     response = requests.request("GET", url, headers=headers, params=querystring)
+    #     s=json.loads(response.text)
+    #     songurl=str(s['platforms'][0]['url'])
+    #     webbrowser.open(songurl)
+
+    #     print(songurl)
+
+
+    if intent == "restaurant":
+        url = "https://nearby-places.p.rapidapi.com/nearby"
+
+        querystring = {"lat":lat,"lng":long,"type":"cafe","radius":"600"}
+
+
+        headers = {
+            "X-RapidAPI-Key": "0b8e8ae0a7msh52f9b71b43e7b4fp1038a9jsn3fa25365e2ea",
+            "X-RapidAPI-Host": "nearby-places.p.rapidapi.com"
+        }
+
+#         headers = {
+# 	"X-RapidAPI-Key": "c607ce4b44mshf7cdc16120027e0p183be7jsn37acb1ed9913",
+# 	"X-RapidAPI-Host": "nearby-places.p.rapidapi.com"
+# }
+
+        response = requests.request("GET", url, headers=headers, params=querystring)
+
+        r= json.loads(response.text)
+        rest1 = []
+        for x in range(6):
+            restname = str(r[x]['name'])
+            restadd = str(r[x]['address'])
+            restdist = str(r[x]['distanceMeter'])
+            
+            rest1.append(restname)
+            rest1.append("address "+restadd)
+            rest1.append(restdist+"meters from here")
+        print(rest1)
+        engine.say(rest1)
+        engine.runAndWait()
+
+    if intent == "spotify":
+        url = "https://musiclinkssapi.p.rapidapi.com/apiSearch/track"
+
+        querystring = {"query":translate}
+
+        headers = {
+                "X-RapidAPI-Key": "c607ce4b44mshf7cdc16120027e0p183be7jsn37acb1ed9913",
+                "X-RapidAPI-Host": "musiclinkssapi.p.rapidapi.com"
+            }
+
+        response = requests.request("GET", url, headers=headers, params=querystring)
+        s=json.loads(response.text)
+        songurl=str(s['platforms'][0]['url'])
+        webbrowser.open(songurl)
+
+        print(songurl)
+
+
+        
+            
 
     if translate in greetings:
         random_greeting = random.choice(greetings)
@@ -182,7 +278,7 @@ while True:
         print("It keeps changing every micro second")
     elif translate in cmd2:
         mixer.init()
-        mixer.music.load("song.wav")
+        mixer.music.load("music.mp3")
         mixer.music.play()
     elif translate in var4:
         engine.say("I am a bot, silly")
