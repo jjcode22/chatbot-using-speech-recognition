@@ -94,7 +94,7 @@ You can quit by pressing <kbd>Ctrl</kbd>+<kbd>C</kbd>
     - Click the menu button and select __APIs & Services > Credentials__.
     - On the __Credentials__ page, click __Create credentials > API key__.
     - Copy and paste the API key in [`config.py`](/config.py) file.
-    
+      
 ## Run the application 
 Run the application using command - ```python chatbot.py```
 
